@@ -1,0 +1,63 @@
+// ==UserScript==
+// ==UserScript==
+// @name Watch chain bonus hits
+// @version 1.5
+// @description Slow down chains when approaching bonus hits. It gives a prompt that you can only can confirm with the current chain count
+// @author AdAlf [2626548]
+// @match https://www.torn.com/loader.php?sid=attack&user2ID=*
+// @run-at document-start
+// @grant none
+// ==/UserScript==
+
+
+var limits = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000] // Array with bonus hits
+
+// First time use: ask for user API key and store it locally on users device
+if(typeof localStorage.TornUserAPIKey == "undefined"){
+   var key = prompt('Please enter your API key to use the script. \r\nYour key will be stored locally on your device\r\nTorn PDA users will see their key already filled in.', '###PDA-APIKEY###');
+    localStorage.setItem('TornUserAPIKey', key);
+} else {
+   key = localStorage.getItem('TornUserAPIKey');
+    Count();
+}
+
+async function Count(){
+    fetch("https://api.torn.com/faction/?selections=chain&key=" + key) // Fetches data from API
+
+        .then(function(response) {
+        if (response.ok) {
+            return response.json() // Converts the fetched data into JSON
+        }
+        throw new Error('Network response was not ok.');
+    })
+
+        .then(function(myJson){ if (myJson.error){
+        throw new Error(myJson.error.error);
+    }
+        for(var limit of limits) { // Loop through the limits to see if we are getting close to a bonus hit
+        var diff = limit - myJson.chain.current;
+
+        if(diff <= 10 && diff > 0) {
+           var resp = 0;
+
+           if(localStorage.factionChainHitCallMsgAck != limit) { // Checks if the prompt is already shown
+
+           while (resp != myJson.chain.current){ // Show a prompt which needs the chain count to close
+           resp = prompt('WAIT!\r\nSTOP!\r\nChain is approaching bonus hit ' + limit + '\r\nThe chain count is: ' + myJson.chain.current + '\r\nlook at Faction chat to claim hits.\r\nEnter the chain count above to close the message');
+
+               if (resp == myJson.chain.current) {
+                   localStorage.factionChainHitCallMsgAck = limit; // Store Ack message when prompt is filled correctly
+               }
+           }
+           }
+        }
+        if(typeof localStorage.factionChainHitCallMsgAck != "undefined") {
+
+            if(myJson.chain.current >= localStorage.factionChainHitCallMsgAck) {
+            // Reset the ack after the limit has been crossed.
+            delete localStorage.factionChainHitCallMsgAck;
+        }
+        }
+        }
+})
+}
