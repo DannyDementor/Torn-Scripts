@@ -10,7 +10,7 @@
 // ==/UserScript==
 
 
-var limits = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000] // Array with bonus hits
+var limits = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000,] // Array with bonus hits
 
 // First time use: ask for user API key and store it locally on users device
 if(typeof localStorage.TornUserAPIKey == "undefined"){
